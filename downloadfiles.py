@@ -47,6 +47,15 @@ class DownloadFiles(object):
         root = re.sub(r"[^a-zA-Z_0-9\-]", "", root)
         return '%s_%s%s' % (root, file_id, full_extension)
 
+    def get_created_time(self, created_at):
+        """Correctly format the time for touch -t from the provided ZenDesk timestamp"""
+        time_format = '%Y-%m-%dT%H:%M:%S'
+        created_time = created_at[:-1]
+        created_stamp = calendar.timegm(time.strptime(created_time, time_format))
+        created_date = time.localtime(created_stamp)
+        uploaded_time = time.strftime('%Y-%M-%d_%H:%M:%S', created_date)
+        return uploaded_time
+
     def get_formatted_time(self, created_at):
         """Correctly format the time for touch -t from the provided ZenDesk timestamp"""
         time_format = '%Y-%m-%dT%H:%M:%S'
@@ -121,7 +130,10 @@ class DownloadFiles(object):
         for attachment in attachment_info['attachments']:
             # Extract and properly format all data
             file_id, created_at, filename, url = attachment
-            filename = self.fix_filename(file_id, filename)
+            # Added for better filename suffix
+            uploaded_time = self.get_created_time(created_at)
+            # Changed to use local time suffix
+            filename = self.fix_filename(uploaded_time, filename)
             local_filename = os.path.join(download_directory, filename)
             formatted_time = self.get_formatted_time(created_at)
 
